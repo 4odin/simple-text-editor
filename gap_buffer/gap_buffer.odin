@@ -31,7 +31,7 @@ GapBuffer :: struct {
 	allocator: runtime.Allocator,
 }
 
-length :: proc(gb: ^GapBuffer) -> int {
+get_len :: proc(gb: ^GapBuffer) -> int {
 	gap := gb.end - gb.start
 	return len(gb.buf) - gap
 }
