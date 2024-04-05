@@ -226,8 +226,6 @@ main :: proc() {
 		assert(f != os.INVALID_HANDLE, "Bad Handle")
 		text_buf_flush_to_file(&t.buffer, f)
 	}
-
-	fmt.println("END")
 }
 
 render :: proc(t: ^Terminal) {
