@@ -30,7 +30,7 @@ color_rgb :: proc(r, g, b: int, text := true) {
 }
 
 Ansi_Color :: enum {
-	black = 0,
+	Black = 0,
 	Red,
 	Green,
 	Yellow,

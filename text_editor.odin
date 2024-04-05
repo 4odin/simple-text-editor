@@ -236,8 +236,8 @@ render :: proc(t: ^Terminal) {
 	write_status_line(t)
 	move_to(t.dims.x + STATUS_LINE, 0)
 	set_graphic_rendition(.Bright_Cyan_Background)
+	color_ansi(.Black)
 
-	color_ansi(.Yellow)
 	fmt.print(string(t.status_line[:]))
 
 	move_to(t.dims.x + STATUS_LINE, 0)
@@ -247,6 +247,7 @@ render :: proc(t: ^Terminal) {
 	move_to(1, 1)
 	start, end := get_visible_cursors(t)
 	text_buf_print_range(&t.buffer, &t.screen_buffer, start, end)
+
 	set_graphic_rendition(.Bright_Black_Background)
 
 	str := strings.to_string(t.screen_buffer)
