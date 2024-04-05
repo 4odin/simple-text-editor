@@ -57,14 +57,33 @@ update_render_cursor :: proc(t: ^Terminal) {
 
 	need_to_move := abs_row - t.line_offset - (t.render_cursor.x - 1)
 	if need_to_move < 0 {
-		balance := min(abs(need_to_move), t.render_cursor.x - 1) // relative movement in 0-space
+		balance := min(abs(need_to_move), t.render_cursor.x - 1) // mutate in zero-space, dont need to xform back
 		t.render_cursor.x -= balance
-		t.line_offset -= abs(need_to_move - balance)
+		t.line_offset -= abs(need_to_move) - balance
 	} else if need_to_move > 0 {
 		balance := min(need_to_move, t.dims.x - t.render_cursor.x)
 		t.render_cursor.x += balance
 		t.line_offset += need_to_move - balance
 	}
+}
+
+move_cursor_by_page :: proc(t: ^Terminal, n: int) {
+	if len(t.buffer.lines) == 0 do return
+
+	move_by := n * t.dims.x
+	requested_offset := move_by + t.line_offset
+	actual_offset := clamp(requested_offset, 0, len(t.buffer.lines) - t.dims.x)
+
+	overstep := abs(actual_offset - requested_offset) // todo:: remove abs, not really needed
+	overstep *= n < 0 ? -1 : 1
+	t.line_offset = actual_offset
+
+	t.render_cursor.x = clamp(t.render_cursor.x + overstep, 1, t.dims.x)
+
+	abs_line := t.line_offset + t.render_cursor.x - 1
+	starts_at := t.buffer.lines[abs_line]
+	col := min(t.render_cursor.y - 1, text_buf_get_line_len(&t.buffer, abs_line))
+	t.buffer.cursor = starts_at + col
 }
 
 move_cursor_by_lines :: proc(t: ^Terminal, n: int) {
@@ -130,6 +149,11 @@ write_status_line :: proc(t: ^Terminal) {
 }
 
 get_visible_cursors :: proc(t: ^Terminal) -> (start, end: int) {
+	if len(t.buffer.lines) == 0 {
+		end = text_buf_get_len(&t.buffer)
+		return
+	}
+
 	start = t.buffer.lines[t.line_offset]
 	last_line := min(len(t.buffer.lines) - 1, t.line_offset + t.dims.x)
 
@@ -140,7 +164,25 @@ get_visible_cursors :: proc(t: ^Terminal) -> (start, end: int) {
 }
 
 RUNNING := true
+SHOULD_SAVE := false
 main :: proc() {
+	args := os.args
+
+	if len(args) != 2 {
+		fmt.println("Invalid args - expected 'text-editor <file.ext>")
+		os.exit(1)
+	}
+
+	f, e := os.open(args[1], os.O_CREATE | os.O_RDWR, 0o644)
+	if os.INVALID_HANDLE == f {
+		fmt.println("Bad Handle")
+		os.exit(1)
+	}
+	if e < 0 {
+		fmt.printf("File open error 0x%x", -e)
+		os.exit(1)
+	}
+
 	using ansi_codes
 
 	_set_terminal()
@@ -149,8 +191,19 @@ main :: proc() {
 	alt_buffer_mode(true)
 	defer alt_buffer_mode(false)
 
-	t := terminal_create()
-	text_buf_insert_string_at(&t.buffer, 0, FILE) // todo:: replace with os.read...
+	fs, err := os.file_size(f)
+	assert(err > -1)
+	t := terminal_create(int(fs))
+
+	if fs > 0 {
+		ok := text_buf_insert_file_at(&t.buffer, 0, f)
+		if !ok {
+			alt_buffer_mode(false)
+			_restore_terminal()
+			fmt.println("failed to read input file, aborting")
+			os.exit(1)
+		}
+	}
 
 	// First Paint
 	t.buffer.cursor = 0
@@ -164,6 +217,14 @@ main :: proc() {
 			render(&t)
 		}
 		move_to(t.render_cursor.x, t.render_cursor.y)
+	}
+
+	if SHOULD_SAVE {
+		os.close(f)
+		f, e = os.open(args[1], os.O_TRUNC | os.O_WRONLY, 0o644)
+		assert(e > -1, "Error")
+		assert(f != os.INVALID_HANDLE, "Bad Handle")
+		text_buf_flush_to_file(&t.buffer, f)
 	}
 
 	fmt.println("END")
@@ -186,11 +247,8 @@ render :: proc(t: ^Terminal) {
 
 	// Screen Render
 	move_to(1, 1)
-
 	start, end := get_visible_cursors(t)
-
 	text_buf_print_range(&t.buffer, &t.screen_buffer, start, end)
-
 	set_graphic_rendition(.Bright_Black_Background)
 
 	str := strings.to_string(t.screen_buffer)
@@ -230,13 +288,18 @@ update :: proc(t: ^Terminal) -> bool {
 
 	for i := 0; i < n_read; i += 1 {
 		char := buf[i]
-		if char == CTRL_X {
+
+		if char == CTRL_Q {
 			RUNNING = false
+			break
+		} else if char == CTRL_X {
+			RUNNING = false
+			SHOULD_SAVE = true
 			break
 		}
 
 		if char == ESC {
-			// Arrows 
+			// Arrows - todo:: Guard for `i > n`
 			if buf[i + 1] == 0x5b {
 				// ESC [0x5b] ARROW_CODE
 				i += 2
@@ -253,6 +316,26 @@ update :: proc(t: ^Terminal) -> bool {
 
 				case ARROW_LEFT:
 					move_cursor_by_runes(t, -1)
+
+				case HOME:
+					n := t.render_cursor.y - 1
+					move_cursor_by_runes(t, -n)
+
+				case END:
+					current_line := t.line_offset + t.render_cursor.x - 1
+					ll := text_buf_get_line_len(&t.buffer, current_line)
+					n := ll - t.render_cursor.y
+					move_cursor_by_runes(t, n)
+
+					// bandaid - sometimes end does not actually land on the end..?
+					r := text_buf_get_rune_at(&t.buffer, t.buffer.cursor)
+					if r != '\n' do move_cursor_by_runes(t, 1)
+
+				case PAGE_UP:
+					move_cursor_by_page(t, -1)
+
+				case PAGE_DOWN:
+					move_cursor_by_page(t, 1)
 
 				case 0x33:
 					if buf[i + 1] == DEL do text_buf_remove_at(&t.buffer, t.buffer.cursor, 1)
@@ -273,11 +356,20 @@ update :: proc(t: ^Terminal) -> bool {
 	return n_read > 0
 }
 
+//ctrl+letter = ascii - 64 (0x40)
 ESC :: 0x1b
+
 CTRL_C :: 0x03
 CTRL_X :: 0x18
+CTRL_Q :: 0x11
+
 DEL :: 0x7e
 BKSP :: 0x7f
+
+HOME :: 0x48 // CTRL+ [1b, 5b, 31, 3b, 35, 48],
+END :: 0x46
+PAGE_UP :: 0x35 //[1b, 5b, 35, 7e]
+PAGE_DOWN :: 0x36 // [1b, 5b, 36, 7e]
 
 ARROW_UP :: 0x41 // A
 ARROW_DOWN :: 0x42 // B

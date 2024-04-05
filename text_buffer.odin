@@ -117,8 +117,8 @@ text_buf_remove_at :: proc(tb: ^TextBuffer, cursor: int, count: int) {
 }
 
 // todo:: actual UTF8 support
-text_buf_get_rune_at :: proc(tb: ^TextBuffer) -> rune {
-	cursor := clamp(tb.cursor, 0, text_buf_get_len(tb) - 1)
+text_buf_get_rune_at :: proc(tb: ^TextBuffer, cursor: int) -> rune {
+	cursor := clamp(cursor, 0, text_buf_get_len(tb) - 1)
 
 	left, right := gap_buffer.get_left_right_strings(&tb.gb)
 
