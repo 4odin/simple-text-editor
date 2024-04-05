@@ -11,6 +11,16 @@ TextBuffer :: struct {
 	lines:    [dynamic]int, // starts_at
 }
 
+text_buf_create :: proc(n_bytes: int = 64) -> (tb := TextBuffer{}) {
+	tb.gb = gap_buffer.create(max(64, n_bytes))
+
+	return
+}
+
+text_buf_destroy :: proc(tb: ^TextBuffer) {
+	gap_buffer.destroy(&tb.gb)
+}
+
 // O(n)
 text_buf_calculate_lines :: proc(tb: ^TextBuffer) {
 	clear(&tb.lines)

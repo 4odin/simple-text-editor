@@ -20,7 +20,7 @@ Terminal :: struct {
 	status_line:   [dynamic]u8,
 }
 
-terminal_make :: proc(n_bytes: int = 4) -> (t: Terminal) {
+terminal_create :: proc(n_bytes: int = 4) -> (t: Terminal) {
 	t.dims = _get_window_size()
 	t.screen_buffer = strings.builder_make_len_cap(0, t.dims.x * t.dims.y)
 	t.status_line = make([dynamic]u8, t.dims.y)
@@ -29,7 +29,7 @@ terminal_make :: proc(n_bytes: int = 4) -> (t: Terminal) {
 
 	t.dims.x -= STATUS_LINE
 
-	t.buffer.gb = gap_buffer.create(n_bytes) // todo:: wrap text_buffer make?
+	t.buffer = text_buf_create(n_bytes)
 
 	t.render_cursor = {1, 1}
 
@@ -149,7 +149,7 @@ main :: proc() {
 	alt_buffer_mode(true)
 	defer alt_buffer_mode(false)
 
-	t := terminal_make()
+	t := terminal_create()
 	text_buf_insert_string_at(&t.buffer, 0, FILE) // todo:: replace with os.read...
 
 	// First Paint
