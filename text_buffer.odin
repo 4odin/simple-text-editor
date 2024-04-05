@@ -1,6 +1,7 @@
 package text_editor
 
 import "core:fmt"
+import "core:os"
 import "core:strings"
 import "gap_buffer"
 
@@ -54,6 +55,47 @@ text_buf_insert_string_at :: proc(tb: ^TextBuffer, cursor: int, s: string) {
 	text_buf_calculate_lines(tb)
 }
 
+// todo:: File Cursors?
+text_buf_insert_file_at :: proc(tb: ^TextBuffer, cursor: int, handle: os.Handle) -> (ok: bool) {
+	if handle == os.INVALID_HANDLE do return false
+
+	fs, err := os.file_size(handle)
+
+	if err < 0 do return false
+
+	gap_buffer.check_size(&tb.gb, int(fs))
+	gap_buffer.shift(&tb.gb, cursor)
+
+	gb_slice := tb.buf[tb.gb.start:tb.gb.end]
+
+	n, rerr := os.read(handle, gb_slice)
+
+	fmt.assertf(rerr > -1, "read err 0x%x", -rerr)
+
+	assert(n == int(fs), "mismatched os.read")
+
+	tb.gb.start += n
+
+	text_buf_calculate_lines(tb)
+
+	return true
+}
+
+// todo:: Buffer/File Cursors (?)
+// Note: Seeks to start of file
+text_buf_flush_to_file :: proc(tb: ^TextBuffer, handle: os.Handle) -> (ok: bool) {
+	if handle == os.INVALID_HANDLE do return false
+
+	os.seek(handle, 0, os.SEEK_SET)
+
+	left, right := gap_buffer.get_left_right_strings(&tb.gb)
+
+	os.write_string(handle, left)
+	os.write_string(handle, right)
+
+	return true
+}
+
 text_buf_remove_at :: proc(tb: ^TextBuffer, cursor: int, count: int) {
 	eff_cursor := cursor
 	if count < 0 do eff_cursor -= 2 // Backspace
@@ -70,7 +112,7 @@ text_buf_get_rune_at :: proc(tb: ^TextBuffer) -> rune {
 
 	left, right := gap_buffer.get_left_right_strings(&tb.gb)
 
-	return cursor < len(left) ? rune(left[cursor]) : rune(right[cursor])
+	return cursor < len(left) ? rune(left[cursor]) : rune(right[cursor - len(left)])
 }
 
 text_buf_print_range :: proc(
