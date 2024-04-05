@@ -14,7 +14,7 @@ print_ansi_sgr_table :: proc() {
 }
 
 title :: proc(str: string) {
-	fmt.printf("\x1b]0;%x\a", str)
+	fmt.printf("\x1b]0;%s\a", str)
 }
 
 // `text:false` for background
@@ -45,7 +45,7 @@ Ansi_Color :: enum {
 // `text:false` for background
 color_ansi :: proc(color: Ansi_Color, text := true) {
 	c := text ? '3' : '4'
-	fmt.printf("\x1b[%v$dm", c, color)
+	fmt.printf("\x1b[%v%dm", c, color)
 }
 
 SGR :: enum {
