@@ -6,9 +6,9 @@ import "core:strings"
 import "gap_buffer"
 
 TextBuffer :: struct {
-	using gb: gap_buffer.GapBuffer,
-	cursor:   int, // sb terminal?
-	lines:    [dynamic]int, // starts_at
+	gb:     gap_buffer.GapBuffer,
+	cursor: int, // sb terminal?
+	lines:  [dynamic]int, // starts_at
 }
 
 text_buf_create :: proc(n_bytes: int = 64) -> (tb := TextBuffer{}) {
@@ -78,7 +78,7 @@ text_buf_insert_file_at :: proc(tb: ^TextBuffer, cursor: int, handle: os.Handle)
 	gap_buffer.check_size(&tb.gb, int(fs))
 	gap_buffer.shift(&tb.gb, cursor)
 
-	gb_slice := tb.buf[tb.gb.start:tb.gb.end]
+	gb_slice := tb.gb.buf[tb.gb.start:tb.gb.end]
 
 	n, rerr := os.read(handle, gb_slice)
 
