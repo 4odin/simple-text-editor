@@ -19,6 +19,8 @@ text_buf_create :: proc(n_bytes: int = 64) -> (tb := TextBuffer{}) {
 
 text_buf_destroy :: proc(tb: ^TextBuffer) {
 	gap_buffer.destroy(&tb.gb)
+	delete(tb.lines)
+	tb.lines = nil
 }
 
 // O(n)

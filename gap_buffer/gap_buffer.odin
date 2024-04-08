@@ -59,6 +59,7 @@ create :: proc(n_bytes: int, allocator := context.allocator) -> (gb := GapBuffer
 // Deletes the internal buffer
 destroy :: proc(gb: ^GapBuffer) {
 	delete(gb.buf)
+	gb.buf = nil
 }
 
 // Moves the Gap to the cursor position. Cursors are clamped [0,n) where n is the filled count of the buffer.

@@ -38,7 +38,12 @@ terminal_create :: proc(n_bytes: int = 4) -> (t: Terminal) {
 	return
 }
 
-// todo:: terminal_destroy
+terminal_destroy :: proc(t: ^Terminal) {
+	text_buf_destroy(&t.buffer)
+	strings.builder_destroy(&t.screen_buffer)
+	delete(t.status_line)
+	t.status_line = nil
+}
 
 update_render_cursor :: proc(t: ^Terminal) {
 	abs_row := 0
@@ -166,14 +171,14 @@ get_visible_cursors :: proc(t: ^Terminal) -> (start, end: int) {
 RUNNING := true
 SHOULD_SAVE := false
 main :: proc() {
-	args := os.args
-
-	if len(args) != 2 {
+	if len(os.args) != 2 {
 		fmt.println("Invalid args - expected 'text-editor <file.ext>")
 		os.exit(1)
 	}
 
-	f, e := os.open(args[1], os.O_CREATE | os.O_RDWR, 0o644)
+	file_path := os.args[1]
+
+	f, e := os.open(file_path, os.O_CREATE | os.O_RDWR, 0o644)
 	if os.INVALID_HANDLE == f {
 		fmt.println("Bad Handle")
 		os.exit(1)
@@ -194,6 +199,7 @@ main :: proc() {
 	fs, err := os.file_size(f)
 	assert(err > -1)
 	t := terminal_create(int(fs))
+	defer terminal_destroy(&t)
 
 	if fs > 0 {
 		ok := text_buf_insert_file_at(&t.buffer, 0, f)
@@ -221,7 +227,7 @@ main :: proc() {
 
 	if SHOULD_SAVE {
 		os.close(f)
-		f, e = os.open(args[1], os.O_TRUNC | os.O_WRONLY, 0o644)
+		f, e = os.open(file_path, os.O_WRONLY, 0o644)
 		assert(e > -1, "Error")
 		assert(f != os.INVALID_HANDLE, "Bad Handle")
 		text_buf_flush_to_file(&t.buffer, f)
