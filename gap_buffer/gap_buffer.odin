@@ -100,7 +100,7 @@ check_size :: proc(gb: ^GapBuffer, n_required: int) {
 	gap_len := gb.end - gb.start
 
 	if gap_len < n_required {
-		shift(gb, len(gb.buf) - gb.end)
+		shift(gb, len(gb.buf) - gap_len)
 		req_buf_size := n_required + len(gb.buf) - gap_len
 		new_buf := make([]u8, 2 * req_buf_size, gb.allocator)
 		copy_slice(new_buf, gb.buf[:gb.end])

@@ -1,4 +1,33 @@
 this is a test
 this is edited in linux
 this is another line
+this is a newer line written in windows with testing for buffer resize
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+this works now!
+fantastic!
