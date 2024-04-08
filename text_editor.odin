@@ -225,9 +225,11 @@ main :: proc() {
 		move_to(t.render_cursor.x, t.render_cursor.y)
 	}
 
+	os.close(f)
+
 	if SHOULD_SAVE {
-		os.close(f)
 		f, e = os.open(file_path, os.O_WRONLY, 0o644)
+		defer os.close(f)
 		assert(e > -1, "Error")
 		assert(f != os.INVALID_HANDLE, "Bad Handle")
 		text_buf_flush_to_file(&t.buffer, f)
