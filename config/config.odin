@@ -1,4 +1,4 @@
-package text_editor
+package config
 
 /////////////////// CONSTANTS
 //ctrl+letter = ascii - 64 (0x40)

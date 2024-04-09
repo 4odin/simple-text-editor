@@ -1,7 +1,6 @@
 // +build windows
-// +private
-package text_editor
-import "ansi_codes"
+package internal
+import "../ansi_codes"
 import "core:os"
 import win "core:sys/windows"
 

@@ -1,13 +1,17 @@
 package text_editor
 
 import "ansi_codes"
+import "config"
 import "core:fmt"
 import "core:os"
 import "core:strings"
-import "gap_buffer"
+import "internal"
 
 
 main :: proc() {
+	using config
+	using internal
+
 	if len(os.args) != 2 {
 		fmt.println("Invalid args - expected 'text-editor <file.ext>")
 		os.exit(1)
@@ -74,8 +78,11 @@ main :: proc() {
 	}
 }
 
-render :: proc(t: ^Terminal) {
+render :: proc(t: ^internal.Terminal) {
 	using ansi_codes
+	using internal
+	using config
+
 	erase(.All) // todo:: repaint only touched?
 
 	// Status Line:
@@ -119,7 +126,10 @@ render :: proc(t: ^Terminal) {
 	terminal_clear_status_line(t)
 }
 
-update :: proc(t: ^Terminal) -> bool {
+update :: proc(t: ^internal.Terminal) -> bool {
+	using config
+	using internal
+
 	@(static)
 	buf: [1024]u8
 	buf[1] = 0 // Guard for ESC todo:: is this really really needed?

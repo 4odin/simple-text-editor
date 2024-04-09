@@ -1,24 +1,23 @@
-package text_editor
+package internal
 
 import "core:fmt"
 import "core:os"
 import "core:strings"
-import "gap_buffer"
 
 TextBuffer :: struct {
-	gb:     gap_buffer.GapBuffer,
+	gb:     GapBuffer,
 	cursor: int, // sb terminal?
 	lines:  [dynamic]int, // starts_at
 }
 
 text_buf_create :: proc(n_bytes: int = 64) -> (tb := TextBuffer{}) {
-	tb.gb = gap_buffer.create(max(64, n_bytes))
+	tb.gb = gap_buffer_create(max(64, n_bytes))
 
 	return
 }
 
 text_buf_destroy :: proc(tb: ^TextBuffer) {
-	gap_buffer.destroy(&tb.gb)
+	gap_buffer_destroy(&tb.gb)
 	delete(tb.lines)
 	tb.lines = nil
 }
@@ -27,7 +26,7 @@ text_buf_destroy :: proc(tb: ^TextBuffer) {
 text_buf_calculate_lines :: proc(tb: ^TextBuffer) {
 	clear(&tb.lines)
 
-	left, right := gap_buffer.get_left_right_strings(&tb.gb)
+	left, right := gap_buffer_get_left_right_strings(&tb.gb)
 
 	append(&tb.lines, 0) // start of file
 
@@ -44,7 +43,7 @@ text_buf_calculate_lines :: proc(tb: ^TextBuffer) {
 }
 
 text_buf_get_len :: proc(tb: ^TextBuffer) -> int {
-	return gap_buffer.get_len(&tb.gb)
+	return gap_buffer_get_len(&tb.gb)
 }
 
 text_buf_get_line_len :: proc(tb: ^TextBuffer, the_line: int) -> int {
@@ -62,7 +61,7 @@ text_buf_get_line_len :: proc(tb: ^TextBuffer, the_line: int) -> int {
 }
 
 text_buf_insert_string_at :: proc(tb: ^TextBuffer, cursor: int, s: string) {
-	gap_buffer.insert(&tb.gb, cursor, s)
+	gap_buffer_insert(&tb.gb, cursor, s)
 	tb.cursor += len(s)
 	text_buf_calculate_lines(tb)
 }
@@ -75,8 +74,8 @@ text_buf_insert_file_at :: proc(tb: ^TextBuffer, cursor: int, handle: os.Handle)
 
 	if err < 0 do return false
 
-	gap_buffer.check_size(&tb.gb, int(fs))
-	gap_buffer.shift(&tb.gb, cursor)
+	gap_buffer_check_size(&tb.gb, int(fs))
+	gap_buffer_shift(&tb.gb, cursor)
 
 	gb_slice := tb.gb.buf[tb.gb.start:tb.gb.end]
 
@@ -100,7 +99,7 @@ text_buf_flush_to_file :: proc(tb: ^TextBuffer, handle: os.Handle) -> (ok: bool)
 
 	os.seek(handle, 0, os.SEEK_SET)
 
-	left, right := gap_buffer.get_left_right_strings(&tb.gb)
+	left, right := gap_buffer_get_left_right_strings(&tb.gb)
 
 	os.write_string(handle, left)
 	os.write_string(handle, right)
@@ -111,7 +110,7 @@ text_buf_flush_to_file :: proc(tb: ^TextBuffer, handle: os.Handle) -> (ok: bool)
 text_buf_remove_at :: proc(tb: ^TextBuffer, cursor: int, count: int) {
 	eff_cursor := cursor
 	if count < 0 do eff_cursor -= 2 // Backspace
-	gap_buffer.remove(&tb.gb, cursor, count)
+	gap_buffer_remove(&tb.gb, cursor, count)
 
 	if count < 0 do tb.cursor = max(0, tb.cursor + count)
 
@@ -122,7 +121,7 @@ text_buf_remove_at :: proc(tb: ^TextBuffer, cursor: int, count: int) {
 text_buf_get_rune_at :: proc(tb: ^TextBuffer, cursor: int) -> rune {
 	cursor := clamp(cursor, 0, text_buf_get_len(tb) - 1)
 
-	left, right := gap_buffer.get_left_right_strings(&tb.gb)
+	left, right := gap_buffer_get_left_right_strings(&tb.gb)
 
 	return cursor < len(left) ? rune(left[cursor]) : rune(right[cursor - len(left)])
 }
@@ -132,7 +131,7 @@ text_buf_print_range :: proc(
 	buf: ^strings.Builder,
 	start_cursor, end_cursor: int,
 ) {
-	left, right := gap_buffer.get_left_right_strings(&tb.gb)
+	left, right := gap_buffer_get_left_right_strings(&tb.gb)
 
 	assert(start_cursor >= 0, "invalid start")
 	assert(end_cursor <= text_buf_get_len(tb), "invalid end")

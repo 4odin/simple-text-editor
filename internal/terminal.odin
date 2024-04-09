@@ -1,5 +1,6 @@
-package text_editor
+package internal
 
+import "../config"
 import "core:fmt"
 import "core:mem"
 import "core:strings"
@@ -21,7 +22,7 @@ terminal_create :: proc(n_bytes: int = 4) -> (t: Terminal) {
 
 	terminal_clear_status_line(&t)
 
-	t.dims.x -= STATUS_LINE
+	t.dims.x -= config.STATUS_LINE
 
 	t.buffer = text_buf_create(n_bytes)
 

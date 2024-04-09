@@ -1,5 +1,5 @@
 // +build linux, darwin
-package text_editor
+package internal
 import "core:c"
 import libc "core:c/libc"
 import "core:os"
