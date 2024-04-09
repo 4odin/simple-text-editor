@@ -232,6 +232,7 @@ main :: proc() {
 		assert(e > -1, "Error")
 		assert(f != os.INVALID_HANDLE, "Bad Handle")
 		defer os.close(f)
+
 		text_buf_flush_to_file(&t.buffer, f)
 	}
 }
