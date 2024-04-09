@@ -5,6 +5,8 @@ import "core:os"
 import "core:strings"
 import "internal"
 
+RUNNING := true
+SHOULD_SAVE := false
 
 main :: proc() {
 	using internal

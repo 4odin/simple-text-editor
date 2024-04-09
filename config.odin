@@ -1,6 +1,5 @@
 package text_editor
 
-/////////////////// CONSTANTS
 //ctrl+letter = ascii - 64 (0x40)
 ESC :: 0x1b
 
@@ -21,8 +20,4 @@ ARROW_DOWN :: 0x42 // B
 ARROW_RIGHT :: 0x43 // C
 ARROW_LEFT :: 0x44 // D
 
-
-/////////////////// STATE
 STATUS_LINE :: 1
-RUNNING := true
-SHOULD_SAVE := false
