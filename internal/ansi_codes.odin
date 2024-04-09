@@ -1,4 +1,4 @@
-package ansi_codes
+package internal
 
 import "core:fmt"
 

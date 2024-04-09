@@ -1,7 +1,5 @@
 package text_editor
 
-import "ansi_codes"
-import "config"
 import "core:fmt"
 import "core:os"
 import "core:strings"
@@ -9,7 +7,6 @@ import "internal"
 
 
 main :: proc() {
-	using config
 	using internal
 
 	if len(os.args) != 2 {
@@ -29,8 +26,6 @@ main :: proc() {
 		os.exit(1)
 	}
 
-	using ansi_codes
-
 	_set_terminal()
 	defer _restore_terminal()
 
@@ -39,7 +34,7 @@ main :: proc() {
 
 	fs, err := os.file_size(f)
 	assert(err > -1)
-	t := terminal_create(int(fs))
+	t := terminal_create(int(fs), STATUS_LINE)
 	defer terminal_destroy(&t)
 
 	if fs > 0 {
@@ -79,9 +74,7 @@ main :: proc() {
 }
 
 render :: proc(t: ^internal.Terminal) {
-	using ansi_codes
 	using internal
-	using config
 
 	erase(.All) // todo:: repaint only touched?
 
@@ -127,7 +120,6 @@ render :: proc(t: ^internal.Terminal) {
 }
 
 update :: proc(t: ^internal.Terminal) -> bool {
-	using config
 	using internal
 
 	@(static)

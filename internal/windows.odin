@@ -1,6 +1,5 @@
 // +build windows
 package internal
-import "../ansi_codes"
 import "core:os"
 import win "core:sys/windows"
 
@@ -24,7 +23,7 @@ _set_terminal :: proc() {
 
 _restore_terminal :: proc() {
 	using win
-	ansi_codes.reset()
+	reset()
 	SetConsoleMode(HANDLE(os.stdin), prev_in_mode)
 	SetConsoleMode(HANDLE(os.stdout), prev_out_mode)
 }

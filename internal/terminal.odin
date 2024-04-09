@@ -1,6 +1,5 @@
 package internal
 
-import "../config"
 import "core:fmt"
 import "core:mem"
 import "core:strings"
@@ -15,14 +14,14 @@ Terminal :: struct {
 	status_line:   [dynamic]u8,
 }
 
-terminal_create :: proc(n_bytes: int = 4) -> (t: Terminal) {
+terminal_create :: proc(n_bytes: int = 4, status_line: int) -> (t: Terminal) {
 	t.dims = _get_window_size()
 	t.screen_buffer = strings.builder_make_len_cap(0, t.dims.x * t.dims.y)
 	t.status_line = make([dynamic]u8, t.dims.y)
 
 	terminal_clear_status_line(&t)
 
-	t.dims.x -= config.STATUS_LINE
+	t.dims.x -= status_line
 
 	t.buffer = text_buf_create(n_bytes)
 
