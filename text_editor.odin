@@ -229,9 +229,9 @@ main :: proc() {
 
 	if SHOULD_SAVE {
 		f, e = os.open(file_path, os.O_WRONLY, 0o644)
-		defer os.close(f)
 		assert(e > -1, "Error")
 		assert(f != os.INVALID_HANDLE, "Bad Handle")
+		defer os.close(f)
 		text_buf_flush_to_file(&t.buffer, f)
 	}
 }
