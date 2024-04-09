@@ -56,7 +56,7 @@ main :: proc() {
 	// Main Loop
 	for RUNNING {
 		if update(&t) {
-			update_render_cursor(&t)
+			terminal_update_render_cursor(&t)
 			render(&t)
 		}
 		move_to(t.render_cursor.x, t.render_cursor.y)
@@ -79,7 +79,7 @@ render :: proc(t: ^Terminal) {
 	erase(.All) // todo:: repaint only touched?
 
 	// Status Line:
-	write_status_line(t)
+	terminal_write_status_line(t)
 	move_to(t.dims.x + STATUS_LINE, 0)
 	set_graphic_rendition(.Bright_Cyan_Background)
 	color_ansi(.Black)
@@ -91,7 +91,7 @@ render :: proc(t: ^Terminal) {
 
 	// Screen Render
 	move_to(1, 1)
-	start, end := get_visible_cursors(t)
+	start, end := terminal_get_visible_cursors(t)
 	text_buf_print_range(&t.buffer, &t.screen_buffer, start, end)
 
 	set_graphic_rendition(.Bright_Black_Background)
@@ -116,7 +116,7 @@ render :: proc(t: ^Terminal) {
 
 	reset()
 	clear(&t.screen_buffer.buf)
-	clear_status_line(t)
+	terminal_clear_status_line(t)
 }
 
 update :: proc(t: ^Terminal) -> bool {
@@ -151,36 +151,36 @@ update :: proc(t: ^Terminal) -> bool {
 
 				switch buf[i] {
 				case ARROW_UP:
-					move_cursor_by_lines(t, -1)
+					terminal_move_cursor_by_lines(t, -1)
 
 				case ARROW_DOWN:
-					move_cursor_by_lines(t, 1)
+					terminal_move_cursor_by_lines(t, 1)
 
 				case ARROW_RIGHT:
-					move_cursor_by_runes(t, 1)
+					terminal_move_cursor_by_runes(t, 1)
 
 				case ARROW_LEFT:
-					move_cursor_by_runes(t, -1)
+					terminal_move_cursor_by_runes(t, -1)
 
 				case HOME:
 					n := t.render_cursor.y - 1
-					move_cursor_by_runes(t, -n)
+					terminal_move_cursor_by_runes(t, -n)
 
 				case END:
 					current_line := t.line_offset + t.render_cursor.x - 1
 					ll := text_buf_get_line_len(&t.buffer, current_line)
 					n := ll - t.render_cursor.y
-					move_cursor_by_runes(t, n)
+					terminal_move_cursor_by_runes(t, n)
 
 					// bandaid - sometimes end does not actually land on the end..?
 					r := text_buf_get_rune_at(&t.buffer, t.buffer.cursor)
-					if r != '\n' do move_cursor_by_runes(t, 1)
+					if r != '\n' do terminal_move_cursor_by_runes(t, 1)
 
 				case PAGE_UP:
-					move_cursor_by_page(t, -1)
+					terminal_move_cursor_by_page(t, -1)
 
 				case PAGE_DOWN:
-					move_cursor_by_page(t, 1)
+					terminal_move_cursor_by_page(t, 1)
 
 				case 0x33:
 					if buf[i + 1] == DEL do text_buf_remove_at(&t.buffer, t.buffer.cursor, 1)

@@ -19,7 +19,7 @@ terminal_create :: proc(n_bytes: int = 4) -> (t: Terminal) {
 	t.screen_buffer = strings.builder_make_len_cap(0, t.dims.x * t.dims.y)
 	t.status_line = make([dynamic]u8, t.dims.y)
 
-	clear_status_line(&t)
+	terminal_clear_status_line(&t)
 
 	t.dims.x -= STATUS_LINE
 
@@ -39,7 +39,7 @@ terminal_destroy :: proc(t: ^Terminal) {
 	t.status_line = nil
 }
 
-update_render_cursor :: proc(t: ^Terminal) {
+terminal_update_render_cursor :: proc(t: ^Terminal) {
 	abs_row := 0
 	end_of_buffer := text_buf_get_len(&t.buffer)
 
@@ -66,7 +66,7 @@ update_render_cursor :: proc(t: ^Terminal) {
 	}
 }
 
-move_cursor_by_page :: proc(t: ^Terminal, n: int) {
+terminal_move_cursor_by_page :: proc(t: ^Terminal, n: int) {
 	if len(t.buffer.lines) == 0 do return
 
 	move_by := n * t.dims.x
@@ -85,7 +85,7 @@ move_cursor_by_page :: proc(t: ^Terminal, n: int) {
 	t.buffer.cursor = starts_at + col
 }
 
-move_cursor_by_lines :: proc(t: ^Terminal, n: int) {
+terminal_move_cursor_by_lines :: proc(t: ^Terminal, n: int) {
 	if len(t.buffer.lines) == 0 do return
 
 	row := (t.render_cursor.x - 1) + n
@@ -109,7 +109,7 @@ move_cursor_by_lines :: proc(t: ^Terminal, n: int) {
 }
 
 // todo:: maybe move into text buffer?
-move_cursor_by_runes :: proc(t: ^Terminal, n: int) {
+terminal_move_cursor_by_runes :: proc(t: ^Terminal, n: int) {
 	buffer := t.buffer.gb.buf
 	cursor := t.buffer.cursor
 
@@ -130,11 +130,11 @@ move_cursor_by_runes :: proc(t: ^Terminal, n: int) {
 	t.buffer.cursor = clamp(cursor, 0, text_buf_get_len(&t.buffer))
 }
 
-clear_status_line :: proc(t: ^Terminal) {
+terminal_clear_status_line :: proc(t: ^Terminal) {
 	mem.set(&t.status_line[0], ' ', len(t.status_line))
 }
 
-write_status_line :: proc(t: ^Terminal) {
+terminal_write_status_line :: proc(t: ^Terminal) {
 	fmt.bprintf(
 		t.status_line[:],
 		"[%v,%v] | Offset: %v | Cursor: %v/%v | #Lines: %v | CTRL+X: Save & Exit | CTRL+Q: Quit, No Save",
@@ -147,7 +147,7 @@ write_status_line :: proc(t: ^Terminal) {
 	)
 }
 
-get_visible_cursors :: proc(t: ^Terminal) -> (start, end: int) {
+terminal_get_visible_cursors :: proc(t: ^Terminal) -> (start, end: int) {
 	if len(t.buffer.lines) == 0 {
 		end = text_buf_get_len(&t.buffer)
 		return
