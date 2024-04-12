@@ -1,4 +1,4 @@
-# Stone Age Text Editor
+# Simple Text Editor in Odin
 
 This is considered as a personal exercise to get into the Osin programming, and what can be considered better than re-creation of a old style text editor 😅
 
