@@ -1,4 +1,4 @@
-package text_editor
+package main
 
 import "core:fmt"
 import "core:os"
@@ -12,7 +12,7 @@ main :: proc() {
 	using internal
 
 	if len(os.args) != 2 {
-		fmt.println("Invalid args - expected 'text-editor <file.ext>")
+		fmt.println("Invalid args - expected 'simple-text-editor <file.ext>")
 		os.exit(1)
 	}
 

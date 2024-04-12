@@ -1,4 +1,4 @@
-package text_editor
+package main
 
 //ctrl+letter = ascii - 64 (0x40)
 ESC :: 0x1b
